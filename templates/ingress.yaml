@@ -1,0 +1,32 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "chat-api.fullname" . }}
+  namespace: {{ .Values.namespace | default "chat-api" }}
+  labels:
+    app: {{ include "chat-api.name" . }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{ toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className | default "nginx" }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.ingress.path | default "/" | quote }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "chat-api.fullname" . }}
+                port:
+                  number: {{ .Values.service.port | default 80 }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.tlsSecretName }}
+  {{- end }}
+{{- end }}

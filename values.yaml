@@ -1,0 +1,90 @@
+# charts/chat/values.yaml
+
+# === Основные настройки приложения ===
+replicaCount: 2
+namespace: "chat-api"
+
+# === Docker образ ===
+image:
+  repository: ghcr.io/justgithubaccount/chat-api
+  pullPolicy: Always
+  tag: "1.0.0"
+
+# === Сетевые настройки ===
+containerPort: 8000
+service:
+  type: ClusterIP
+  port: 80
+
+# === Ресурсы ===
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+# === Health checks ===
+readinessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 10
+livenessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 30
+
+# === Service Account ===
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# === Environment Variables (публичные) ===
+env:
+  # OpenTelemetry
+  OTEL_SERVICE_NAME: "chat-api"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://vector-gateway.observability.svc.cluster.local:4318"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_LOGS_EXPORTER: "otlp"
+  
+  # Application
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+
+# === OpenRouter Configuration ===
+openrouter:
+  # API endpoint
+  apiUrl: "https://openrouter.ai/api/v1/chat/completions"
+  # Default model
+  defaultModel: "anthropic/claude-opus-4"
+  # Optional headers для рейтинга
+  # httpReferer: "https://your-domain.com"  # Optional
+  # xTitle: "Chat Microservice"              # Optional
+
+# === External Dependencies ===
+externalServices:
+  postgresql:
+    enabled: false
+    host: ""
+    port: 5432
+
+# Secrets
+openrouterSecretRefName: "chat-openrouter"
+postgresSecretRefName: "chat-postgree"
+
+# PostgreSQL
+postgres:
+  externalService:
+    enabled: false
+
+# Ingress
+ingress:
+  enabled: false
+  className: nginx
+  host: ""
+  path: /
+  tls: false
+  
+# Другие возможные секции
+createInternalSecret: false

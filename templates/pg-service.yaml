@@ -1,0 +1,16 @@
+{{- if .Values.postgres.externalService.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-external
+  namespace: {{ .Values.namespace | default "chat-api" }}
+  labels:
+    app: {{ include "chat-api.name" . }}
+    component: database
+spec:
+  type: ExternalName
+  externalName: {{ .Values.postgres.externalService.host }}
+  ports:
+  - port: 5432
+    targetPort: 5432
+{{- end }}
