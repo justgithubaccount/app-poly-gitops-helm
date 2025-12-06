@@ -86,5 +86,14 @@ ingress:
   path: /
   tls: false
   
+# Extra environment variables (for PGO secrets mapping, etc.)
+extraEnv: []
+# Example:
+#   - name: DATABASE_URL
+#     valueFrom:
+#       secretKeyRef:
+#         name: chat-db-pguser-chatapi
+#         key: uri
+
 # Другие возможные секции
 createInternalSecret: false
