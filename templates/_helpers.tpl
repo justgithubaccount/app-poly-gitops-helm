@@ -15,6 +15,10 @@
 {{- end }}
 {{- end }}
 
+{{- define "chat-api.namespace" -}}
+{{- default .Release.Namespace .Values.namespace -}}
+{{- end }}
+
 {{- define "chat-api.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}

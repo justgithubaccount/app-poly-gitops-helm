@@ -3,7 +3,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "chat-api.fullname" . }}
-  namespace: {{ .Values.namespace | default "chat-api" }}
+  namespace: {{ include "chat-api.namespace" . }}
   labels:
     app: {{ include "chat-api.name" . }}
   annotations:

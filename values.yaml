@@ -1,14 +1,14 @@
 # charts/chat/values.yaml
 
 # === Основные настройки приложения ===
-replicaCount: 2
-namespace: "chat-api"
+replicaCount: 1
+namespace: ""
 
 # === Docker образ ===
 image:
-  repository: ghcr.io/justgithubaccount/chat-api
-  pullPolicy: Always
-  tag: "1.0.0"
+  repository: ghcr.io/justgithubaccount/app-poly-gitops-fastapi
+  pullPolicy: IfNotPresent
+  tag: "1.1.1"
 
 # === Сетевые настройки ===
 containerPort: 8000
@@ -43,10 +43,10 @@ serviceAccount:
 env:
   # OpenTelemetry
   OTEL_SERVICE_NAME: "chat-api"
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://vector-gateway.observability.svc.cluster.local:4318"
+  OTEL_EXPORTER_OTLP_ENDPOINT: ""
   OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
-  OTEL_TRACES_EXPORTER: "otlp"
-  OTEL_LOGS_EXPORTER: "otlp"
+  OTEL_TRACES_EXPORTER: "none"
+  OTEL_LOGS_EXPORTER: "none"
   
   # Application
   ENVIRONMENT: "production"
@@ -63,20 +63,16 @@ openrouter:
   # xTitle: "Chat Microservice"              # Optional
 
 # === External Dependencies ===
-externalServices:
-  postgresql:
-    enabled: false
-    host: ""
-    port: 5432
-
 # Secrets
-openrouterSecretRefName: "chat-openrouter"
-postgresSecretRefName: "chat-postgree"
+openrouterSecretRefName: ""
+postgresSecretRefName: ""
 
 # PostgreSQL
 postgres:
   externalService:
     enabled: false
+    host: ""
+    port: 5432
 
 # Ingress
 ingress:
@@ -85,6 +81,7 @@ ingress:
   host: ""
   path: /
   tls: false
+  tlsSecretName: ""
   
 # Extra environment variables (for PGO secrets mapping, etc.)
 extraEnv: []
