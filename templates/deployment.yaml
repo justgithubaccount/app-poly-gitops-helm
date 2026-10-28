@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "chat-api.fullname" . }}
-  namespace: {{ .Values.namespace | default "chat-api" }}
+  namespace: {{ include "chat-api.namespace" . }}
   labels:
     {{- include "chat-api.labels" . | nindent 4 }}
 spec:
@@ -73,13 +73,17 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
 
+          {{- if or .Values.openrouterSecretRefName .Values.postgresSecretRefName }}
           envFrom:
+            {{- if .Values.openrouterSecretRefName }}
             - secretRef:
-                name: {{ .Values.openrouterSecretRefName | default "chat-openrouter" }}
+                name: {{ .Values.openrouterSecretRefName }}
+            {{- end }}
             {{- if .Values.postgresSecretRefName }}
             - secretRef:
                 name: {{ .Values.postgresSecretRefName }}
             {{- end }}
+          {{- end }}
                       
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
@@ -98,13 +102,11 @@ spec:
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds | default 10 }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds | default 30 }}
             
-          {{- if .Values.command }}
-          command: {{ .Values.command }}
+          {{- with .Values.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if .Values.args }}
-          args: {{ .Values.args }}
-          {{- else }}
-          command: ["/bin/sh", "-c"]
+          {{- with .Values.args }}
           args:
-            - uvicorn app.main:app --host 0.0.0.0 --port {{ .Values.containerPort }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}

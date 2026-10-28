@@ -1,0 +1,25 @@
+name: Validate Helm chart
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.19.0
+
+      - name: Chart contract
+        run: bash tests/test_chart.sh
+
+      - name: Render standalone chart
+        run: helm template chat-api . --namespace smoke >/dev/null

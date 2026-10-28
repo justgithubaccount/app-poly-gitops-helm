@@ -4,7 +4,17 @@ Helm chart для деплоя [Chat API Microservice](https://github.com/justgi
 
 ## Быстрый старт
 
-### 1. Создать secrets
+### 1. Установить chart
+
+Для health-check и локальной SQLite secrets не нужны:
+
+```bash
+helm install chat-api . \
+  --namespace chat-api \
+  --create-namespace
+```
+
+### 2. Опционально подключить внешние сервисы
 
 ```bash
 # OpenRouter API key
@@ -16,14 +26,6 @@ kubectl create secret generic chat-openrouter \
 kubectl create secret generic chat-postgres \
   --namespace chat-api \
   --from-literal=DATABASE_URL=postgresql://user:pass@host:5432/db
-```
-
-### 2. Установить chart
-
-```bash
-helm install chat-api . \
-  --namespace chat-api \
-  --create-namespace
 ```
 
 ### 3. Проверить
@@ -39,9 +41,9 @@ kubectl logs -f deployment/chat-api -n chat-api
 
 | Параметр | Описание | Default |
 |----------|----------|---------|
-| `replicaCount` | Количество реплик | `2` |
-| `image.repository` | Docker image | `ghcr.io/justgithubaccount/chat-api` |
-| `image.tag` | Image tag | `1.0.0` |
+| `replicaCount` | Количество реплик | `1` |
+| `image.repository` | Docker image | `ghcr.io/justgithubaccount/app-poly-gitops-fastapi` |
+| `image.tag` | Image tag | `1.1.1` |
 | `containerPort` | Порт приложения | `8000` |
 | `service.type` | Тип сервиса | `ClusterIP` |
 | `service.port` | Порт сервиса | `80` |
@@ -98,7 +100,7 @@ env:
 
 ```
 .
-├── Chart.yaml          # Metadata (v0.3.0)
+├── Chart.yaml          # Metadata (v0.4.0)
 ├── values.yaml         # Default values
 └── templates/
     ├── _helpers.tpl    # Template helpers
