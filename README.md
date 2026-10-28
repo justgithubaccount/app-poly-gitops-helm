@@ -43,7 +43,7 @@ kubectl logs -f deployment/chat-api -n chat-api
 |----------|----------|---------|
 | `replicaCount` | Количество реплик | `1` |
 | `image.repository` | Docker image | `ghcr.io/justgithubaccount/app-poly-gitops-fastapi` |
-| `image.tag` | Image tag | `1.1.1` |
+| `image.tag` | Image tag | `1.1.2` |
 | `containerPort` | Порт приложения | `8000` |
 | `service.type` | Тип сервиса | `ClusterIP` |
 | `service.port` | Порт сервиса | `80` |
@@ -100,7 +100,7 @@ env:
 
 ```
 .
-├── Chart.yaml          # Metadata (v0.4.0)
+├── Chart.yaml          # Metadata (v0.4.1)
 ├── values.yaml         # Default values
 └── templates/
     ├── _helpers.tpl    # Template helpers

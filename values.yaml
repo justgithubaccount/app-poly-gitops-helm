@@ -8,7 +8,7 @@ namespace: ""
 image:
   repository: ghcr.io/justgithubaccount/app-poly-gitops-fastapi
   pullPolicy: IfNotPresent
-  tag: "1.1.1"
+  tag: "1.1.2"
 
 # === Сетевые настройки ===
 containerPort: 8000
