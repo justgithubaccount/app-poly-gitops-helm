@@ -1,158 +1,95 @@
 # Chat API Helm Chart
 
-Helm chart для деплоя [Chat API Microservice](https://github.com/justgithubaccount/app-poly-gitops-fastapi) в Kubernetes.
+Helm chart for deploying
+[app-poly-gitops-fastapi](https://github.com/justgithubaccount/app-poly-gitops-fastapi)
+to Kubernetes. The chart packages the Deployment, Service, optional Ingress,
+ServiceAccount, and optional external-service wiring.
 
-## Быстрый старт
+## Overview
 
-### 1. Установить chart
+- Chart version: `0.4.1`
+- Application version and default image tag: `1.1.2`
+- Default service: `ClusterIP` on port 80
+- Default database: SQLite on the pod filesystem; the chart creates no persistent volume
+- Optional dependencies: OpenRouter secret and PostgreSQL connection secret
 
-Для health-check и локальной SQLite secrets не нужны:
+No secret is required for rendering the chart or starting the health endpoint.
+Real model requests require a secret selected with
+`openrouterSecretRefName`. PostgreSQL can be supplied through
+`postgresSecretRefName` or explicit `extraEnv` entries.
+Use an external database when data must survive pod replacement.
 
-```bash
-helm install chat-api . \
+## Getting started
+
+Requirements: Helm 3 and access to a Kubernetes cluster for installation.
+
+~~~bash
+helm lint .
+helm template chat-api . --namespace chat-api
+~~~
+
+To install the defaults:
+
+~~~bash
+helm upgrade --install chat-api . \
   --namespace chat-api \
   --create-namespace
-```
+~~~
 
-### 2. Опционально подключить внешние сервисы
+For a real provider key, create the Secret outside the chart and reference it:
 
-```bash
-# OpenRouter API key
-kubectl create secret generic chat-openrouter \
+~~~bash
+kubectl create namespace chat-api --dry-run=client -o yaml | kubectl apply -f -
+
+IFS= read -r -s -p "OpenRouter API key: " OPENROUTER_API_KEY
+printf '\n'
+printf %s "$OPENROUTER_API_KEY" |
+  kubectl -n chat-api create secret generic chat-openrouter \
+    --from-file=OPENROUTER_API_KEY=/dev/stdin
+unset OPENROUTER_API_KEY
+
+helm upgrade --install chat-api . \
   --namespace chat-api \
-  --from-literal=OPENROUTER_API_KEY=sk-or-v1-...
+  --set openrouterSecretRefName=chat-openrouter
+~~~
 
-# PostgreSQL connection
-kubectl create secret generic chat-postgres \
-  --namespace chat-api \
-  --from-literal=DATABASE_URL=postgresql://user:pass@host:5432/db
-```
+## Configuration
 
-### 3. Проверить
+| Value | Default | Purpose |
+| --- | --- | --- |
+| `image.repository` | `ghcr.io/justgithubaccount/app-poly-gitops-fastapi` | Runtime image |
+| `image.tag` | `1.1.2` | Runtime image tag |
+| `replicaCount` | `1` | Deployment replicas |
+| `service.port` | `80` | Service port |
+| `openrouter.apiUrl` | OpenRouter chat-completions endpoint | Provider endpoint |
+| `openrouter.defaultModel` | `anthropic/claude-opus-4` | Model identifier |
+| `openrouterSecretRefName` | empty | Existing provider Secret |
+| `postgresSecretRefName` | empty | Existing database Secret |
+| `ingress.enabled` | `false` | Render an Ingress |
+| `extraEnv` | `[]` | Additional container environment entries |
 
-```bash
-kubectl get pods -n chat-api
-kubectl logs -f deployment/chat-api -n chat-api
-```
+See [values.yaml](values.yaml) for resource requests, probes, telemetry settings,
+Ingress options, and the complete value set.
 
-## Конфигурация
+## Repository structure
 
-### Основные параметры
+- `Chart.yaml` — chart metadata
+- `values.yaml` — default values
+- `templates/` — Kubernetes templates
+- `tests/test_chart.sh` — lint and rendered-contract checks
 
-| Параметр | Описание | Default |
-|----------|----------|---------|
-| `replicaCount` | Количество реплик | `1` |
-| `image.repository` | Docker image | `ghcr.io/justgithubaccount/app-poly-gitops-fastapi` |
-| `image.tag` | Image tag | `1.1.2` |
-| `containerPort` | Порт приложения | `8000` |
-| `service.type` | Тип сервиса | `ClusterIP` |
-| `service.port` | Порт сервиса | `80` |
+Run the repository check with:
 
-### Resources
+~~~bash
+bash tests/test_chart.sh
+~~~
 
-```yaml
-resources:
-  requests:
-    memory: "256Mi"
-    cpu: "100m"
-  limits:
-    memory: "512Mi"
-    cpu: "500m"
-```
+## Related repositories
 
-### OpenRouter
-
-| Параметр | Описание | Default |
-|----------|----------|---------|
-| `openrouter.apiUrl` | API endpoint | `https://openrouter.ai/api/v1/chat/completions` |
-| `openrouter.defaultModel` | LLM модель | `anthropic/claude-opus-4` |
-| `openrouterSecretRefName` | Secret с API key | `chat-openrouter` |
-
-### PostgreSQL
-
-| Параметр | Описание | Default |
-|----------|----------|---------|
-| `postgresSecretRefName` | Secret с DATABASE_URL | `chat-postgres` |
-| `postgres.externalService.enabled` | ExternalName service | `false` |
-
-### Ingress
-
-```yaml
-ingress:
-  enabled: true
-  className: nginx
-  host: chat-api.example.com
-  path: /
-  tls: true
-```
-
-### OpenTelemetry
-
-```yaml
-env:
-  OTEL_SERVICE_NAME: "chat-api"
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
-  OTEL_TRACES_EXPORTER: "otlp"
-  OTEL_LOGS_EXPORTER: "otlp"
-```
-
-## Структура
-
-```
-.
-├── Chart.yaml          # Metadata (v0.4.1)
-├── values.yaml         # Default values
-└── templates/
-    ├── _helpers.tpl    # Template helpers
-    ├── deployment.yaml # Deployment
-    ├── service.yaml    # ClusterIP Service
-    ├── ingress.yaml    # Ingress (optional)
-    ├── secret.yaml     # Secret (optional)
-    ├── serviceaccount.yaml
-    └── pg-service.yaml # PostgreSQL ExternalName
-```
-
-## Health Checks
-
-Chart настраивает probes на endpoint `/health`:
-
-- **Readiness**: initial 5s, period 10s
-- **Liveness**: initial 10s, period 30s
-
-## Примеры
-
-### Минимальный деплой
-
-```bash
-helm install chat-api . \
-  --set image.tag=latest \
-  --namespace chat-api \
-  --create-namespace
-```
-
-### С Ingress
-
-```bash
-helm install chat-api . \
-  --set ingress.enabled=true \
-  --set ingress.host=chat.example.com \
-  --set ingress.tls=true \
-  --namespace chat-api
-```
-
-### Custom values
-
-```bash
-helm install chat-api . \
-  -f my-values.yaml \
-  --namespace chat-api
-```
-
-## Связанные репозитории
-
-- [app-poly-gitops-fastapi](https://github.com/justgithubaccount/app-poly-gitops-fastapi) — FastAPI приложение
-- [app-crewai-cluster](https://github.com/justgithubaccount/app-crewai-cluster) — CrewAI агенты
-- [app-release](https://github.com/justgithubaccount/app-release) — GitOps манифесты
+- [app-poly-gitops-fastapi](https://github.com/justgithubaccount/app-poly-gitops-fastapi) — packaged application
+- [app-poly-gitops-k8s](https://github.com/justgithubaccount/app-poly-gitops-k8s) — environment-specific GitOps values
+- [app-poly-gitops-infra](https://github.com/justgithubaccount/app-poly-gitops-infra) — cluster provisioning and Argo CD bootstrap
+- [app-mono-gitops](https://github.com/justgithubaccount/app-mono-gitops) — archived predecessor
 
 ## License
 
