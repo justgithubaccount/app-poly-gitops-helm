@@ -10,13 +10,14 @@ ServiceAccount, and optional external-service wiring.
 - Chart version: `0.4.1`
 - Application version and default image tag: `1.1.2`
 - Default service: `ClusterIP` on port 80
-- Default persistence: application-managed SQLite
+- Default database: SQLite on the pod filesystem; the chart creates no persistent volume
 - Optional dependencies: OpenRouter secret and PostgreSQL connection secret
 
 No secret is required for rendering the chart or starting the health endpoint.
 Real model requests require a secret selected with
 `openrouterSecretRefName`. PostgreSQL can be supplied through
 `postgresSecretRefName` or explicit `extraEnv` entries.
+Use an external database when data must survive pod replacement.
 
 ## Getting started
 
@@ -38,8 +39,14 @@ helm upgrade --install chat-api . \
 For a real provider key, create the Secret outside the chart and reference it:
 
 ~~~bash
-kubectl -n chat-api create secret generic chat-openrouter \
-  --from-literal=OPENROUTER_API_KEY='replace-me'
+kubectl create namespace chat-api --dry-run=client -o yaml | kubectl apply -f -
+
+IFS= read -r -s -p "OpenRouter API key: " OPENROUTER_API_KEY
+printf '\n'
+printf %s "$OPENROUTER_API_KEY" |
+  kubectl -n chat-api create secret generic chat-openrouter \
+    --from-file=OPENROUTER_API_KEY=/dev/stdin
+unset OPENROUTER_API_KEY
 
 helm upgrade --install chat-api . \
   --namespace chat-api \
