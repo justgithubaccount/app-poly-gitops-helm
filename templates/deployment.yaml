@@ -21,13 +21,11 @@ spec:
       containers:
         - name: chat-api
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          # image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.containerPort }}
               name: http
           env:
-            # OpenTelemetry configuration
             - name: OTEL_SERVICE_NAME
               value: {{ .Values.env.OTEL_SERVICE_NAME | default "chat-api" | quote }}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
@@ -39,12 +37,10 @@ spec:
             - name: OTEL_LOGS_EXPORTER
               value: {{ .Values.env.OTEL_LOGS_EXPORTER | quote }}
             
-            # Environment
             - name: ENVIRONMENT
               value: {{ .Values.env.ENVIRONMENT | default "production" | quote }}
             - name: APP_VERSION
               value: {{ .Values.image.tag | quote }}
-              # value: {{ .Chart.AppVersion | quote }}
             - name: LOG_LEVEL
               value: {{ .Values.env.LOG_LEVEL | default "INFO" | quote }}
             - name: OPENROUTER_API_URL
@@ -52,7 +48,7 @@ spec:
             - name: OPENROUTER_MODEL  
               value: {{ .Values.openrouter.defaultModel | quote }}
             
-            # Kubernetes metadata
+            # Downward API metadata enriches application telemetry.
             - name: K8S_NODE_NAME
               valueFrom:
                 fieldRef:
