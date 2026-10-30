@@ -9,7 +9,7 @@ metadata:
     component: database
 spec:
   type: ExternalName
-  externalName: {{ .Values.postgres.externalService.host }}
+  externalName: {{ required "postgres.externalService.host is required when postgres.externalService.enabled=true" .Values.postgres.externalService.host }}
   ports:
   - port: {{ .Values.postgres.externalService.port }}
     targetPort: {{ .Values.postgres.externalService.port }}

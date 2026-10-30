@@ -19,6 +19,14 @@
 {{- default .Release.Namespace .Values.namespace -}}
 {{- end }}
 
+{{- define "chat-api.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+{{- default (include "chat-api.fullname" .) .Values.serviceAccount.name -}}
+{{- else -}}
+{{- required "serviceAccount.name is required when serviceAccount.create=false" .Values.serviceAccount.name -}}
+{{- end -}}
+{{- end }}
+
 {{- define "chat-api.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
