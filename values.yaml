@@ -1,22 +1,16 @@
-# charts/chat/values.yaml
-
-# === Основные настройки приложения ===
 replicaCount: 1
 namespace: ""
 
-# === Docker образ ===
 image:
   repository: ghcr.io/justgithubaccount/app-poly-gitops-fastapi
   pullPolicy: IfNotPresent
   tag: "1.1.2"
 
-# === Сетевые настройки ===
 containerPort: 8000
 service:
   type: ClusterIP
   port: 80
 
-# === Ресурсы ===
 resources:
   requests:
     memory: "256Mi"
@@ -25,7 +19,6 @@ resources:
     memory: "512Mi"
     cpu: "500m"
 
-# === Health checks ===
 readinessProbe:
   initialDelaySeconds: 5
   periodSeconds: 10
@@ -33,48 +26,38 @@ livenessProbe:
   initialDelaySeconds: 10
   periodSeconds: 30
 
-# === Service Account ===
 serviceAccount:
   create: true
   annotations: {}
   name: ""
 
-# === Environment Variables (публичные) ===
 env:
-  # OpenTelemetry
   OTEL_SERVICE_NAME: "chat-api"
   OTEL_EXPORTER_OTLP_ENDPOINT: ""
   OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
   OTEL_TRACES_EXPORTER: "none"
   OTEL_LOGS_EXPORTER: "none"
   
-  # Application
   ENVIRONMENT: "production"
   LOG_LEVEL: "INFO"
 
-# === OpenRouter Configuration ===
 openrouter:
-  # API endpoint
   apiUrl: "https://openrouter.ai/api/v1/chat/completions"
-  # Default model
   defaultModel: "anthropic/claude-opus-4"
-  # Optional headers для рейтинга
-  # httpReferer: "https://your-domain.com"  # Optional
-  # xTitle: "Chat Microservice"              # Optional
+  # Optional provider attribution headers.
+  # httpReferer: "https://your-domain.com"
+  # xTitle: "Chat Microservice"
 
-# === External Dependencies ===
-# Secrets
+# Existing Secrets are optional so the health endpoint can start offline.
 openrouterSecretRefName: ""
 postgresSecretRefName: ""
 
-# PostgreSQL
 postgres:
   externalService:
     enabled: false
     host: ""
     port: 5432
 
-# Ingress
 ingress:
   enabled: false
   className: nginx
@@ -83,14 +66,7 @@ ingress:
   tls: false
   tlsSecretName: ""
   
-# Extra environment variables (for PGO secrets mapping, etc.)
+# Additional container environment entries, including Secret key mappings.
 extraEnv: []
-# Example:
-#   - name: DATABASE_URL
-#     valueFrom:
-#       secretKeyRef:
-#         name: chat-db-pguser-chatapi
-#         key: uri
 
-# Другие возможные секции
 createInternalSecret: false
