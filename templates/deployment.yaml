@@ -17,7 +17,7 @@ spec:
       annotations:
         openrouter.model: {{ .Values.openrouter.defaultModel | quote }}
     spec:
-      serviceAccountName: {{ include "chat-api.fullname" . }}
+      serviceAccountName: {{ include "chat-api.serviceAccountName" . }}
       containers:
         - name: chat-api
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -69,8 +69,12 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
 
-          {{- if or .Values.openrouterSecretRefName .Values.postgresSecretRefName }}
+          {{- if or .Values.createInternalSecret .Values.openrouterSecretRefName .Values.postgresSecretRefName }}
           envFrom:
+            {{- if .Values.createInternalSecret }}
+            - secretRef:
+                name: {{ include "chat-api.fullname" . }}-config
+            {{- end }}
             {{- if .Values.openrouterSecretRefName }}
             - secretRef:
                 name: {{ .Values.openrouterSecretRefName }}

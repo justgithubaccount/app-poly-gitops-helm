@@ -12,14 +12,28 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
+      - uses: actions/checkout@v7
+        with:
+          repository: justgithubaccount/app-poly-gitops-k8s
+          ref: main
+          path: downstream-k8s
 
       - uses: azure/setup-helm@v4
         with:
           version: v3.19.0
 
+      - name: Install validation tools
+        run: |
+          python3 -m pip install --disable-pip-version-check PyYAML==6.0.3
+          curl --fail --location --silent --show-error \
+            https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz \
+            | tar -xz kubeconform
+          sudo mv kubeconform /usr/local/bin/kubeconform
+
       - name: Chart contract
         run: bash tests/test_chart.sh
 
-      - name: Render standalone chart
-        run: helm template chat-api . --namespace smoke >/dev/null
+      - name: Current GitOps consumer layering
+        run: bash tests/test_downstream.sh downstream-k8s

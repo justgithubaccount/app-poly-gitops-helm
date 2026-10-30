@@ -19,6 +19,17 @@ Real model requests require a secret selected with
 `postgresSecretRefName` or explicit `extraEnv` entries.
 Use an external database when data must survive pod replacement.
 
+`serviceAccount.create=true` creates and selects one ServiceAccount. Set
+`serviceAccount.name` to override its name. With `serviceAccount.create=false`,
+`serviceAccount.name` is required and must identify an existing account.
+
+`createInternalSecret=true` creates a chart-managed Secret for the non-sensitive
+provider URL, model and optional attribution headers, and attaches it to the
+Deployment. It does not store a provider key. `postgres.externalService.enabled`
+only creates the stable `postgres-external` DNS name for an external host; it
+cannot construct credentials or a database name, so `DATABASE_URL` must still be
+provided through `postgresSecretRefName` or `extraEnv`.
+
 ## Getting started
 
 Requirements: Helm 3 and access to a Kubernetes cluster for installation.
@@ -65,6 +76,10 @@ helm upgrade --install chat-api . \
 | `openrouter.defaultModel` | `anthropic/claude-opus-4` | Model identifier |
 | `openrouterSecretRefName` | empty | Existing provider Secret |
 | `postgresSecretRefName` | empty | Existing database Secret |
+| `serviceAccount.create` | `true` | Create a ServiceAccount |
+| `serviceAccount.name` | empty | Created-account override, or required existing account name |
+| `createInternalSecret` | `false` | Create and consume non-sensitive provider configuration |
+| `postgres.externalService.enabled` | `false` | Create an ExternalName Service; does not set `DATABASE_URL` |
 | `ingress.enabled` | `false` | Render an Ingress |
 | `extraEnv` | `[]` | Additional container environment entries |
 
@@ -77,11 +92,13 @@ Ingress options, and the complete value set.
 - `values.yaml` — default values
 - `templates/` — Kubernetes templates
 - `tests/test_chart.sh` — lint and rendered-contract checks
+- `tests/test_downstream.sh` — current GitOps values and chart-pin compatibility
 
 Run the repository check with:
 
 ~~~bash
 bash tests/test_chart.sh
+bash tests/test_downstream.sh ../app-poly-gitops-k8s
 ~~~
 
 ## Related repositories

@@ -29,6 +29,7 @@ livenessProbe:
 serviceAccount:
   create: true
   annotations: {}
+  # Required when create=false. When create=true, empty uses the chart fullname.
   name: ""
 
 env:
@@ -54,6 +55,8 @@ postgresSecretRefName: ""
 
 postgres:
   externalService:
+    # Creates only an ExternalName Service. Supply DATABASE_URL separately with
+    # postgresSecretRefName or extraEnv; credentials are intentionally not built here.
     enabled: false
     host: ""
     port: 5432
@@ -69,4 +72,6 @@ ingress:
 # Additional container environment entries, including Secret key mappings.
 extraEnv: []
 
+# Creates and consumes a chart-managed Secret for non-sensitive provider config.
+# Provider credentials still belong in openrouterSecretRefName or extraEnv.
 createInternalSecret: false
